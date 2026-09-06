@@ -273,7 +273,13 @@ const stations = [
   {
     key:"nariz", title:"Por la nariz", type:"open", color:"#6C63C9",
     question:"¿Por qué la respiración nasal es más beneficiosa que respirar constantemente por la boca?",
-    model:"La nariz filtra, calienta y humidifica el aire antes de que llegue a los pulmones. Los pelillos nasales y el moco atrapan partículas y microorganismos. Respirar por la boca salta ese filtro: el aire llega frío, seco y sin filtrar, reseca las mucosas y favorece infecciones."
+    model:"La nariz filtra, calienta y humidifica el aire antes de que llegue a los pulmones. Los pelillos nasales y el moco atrapan partículas y microorganismos. Respirar por la boca salta ese filtro: el aire llega frío, seco y sin filtrar, reseca las mucosas y favorece infecciones.",
+    concepts:[
+      {label:"Filtra el aire", keywords:["filtr"]},
+      {label:"Calienta el aire", keywords:["calient","tibio","temperatura"]},
+      {label:"Humidifica el aire", keywords:["humidif","humedad","hidrata"]},
+      {label:"Atrapa partículas o microorganismos (moco/cilios)", keywords:["atrap","particul","microorganis","patogen","moco","cilio","bacteria","virus"]}
+    ]
   },
   {
     key:"cilios", title:"El escudo mucociliar", type:"mc", color:"#1F9E86",
@@ -309,17 +315,35 @@ const stations = [
   {
     key:"diafragma", title:"El músculo motor", type:"open", color:"#6C63C9",
     question:"¿Por qué el diafragma es indispensable para realizar la inspiración?",
-    model:"Al contraerse, el diafragma desciende y aumenta el volumen de la cavidad torácica; eso reduce la presión dentro de los pulmones por debajo de la atmosférica, y el aire entra para equilibrarla. Sin esa contracción no existiría el gradiente de presión necesario para inspirar."
+    model:"Al contraerse, el diafragma desciende y aumenta el volumen de la cavidad torácica; eso reduce la presión dentro de los pulmones por debajo de la atmosférica, y el aire entra para equilibrarla. Sin esa contracción no existiría el gradiente de presión necesario para inspirar.",
+    concepts:[
+      {label:"Se contrae y desciende", keywords:["contra","desciend","baja","aplana"]},
+      {label:"Aumenta el volumen torácico", keywords:["aumenta","volumen","expande","ensancha","torac"]},
+      {label:"Disminuye la presión interna", keywords:["presion","disminuy","negativ","reduce"]},
+      {label:"El aire entra para equilibrar la presión", keywords:["entra","equilibr","iguala","gradiente"]}
+    ]
   },
   {
     key:"hipoxemia", title:"Alarma de oxígeno", type:"open", color:"#6C63C9",
     question:"¿Qué ocurre en el organismo cuando disminuye demasiado el nivel de oxígeno en la sangre?",
-    model:"Aparece hipoxemia: taquicardia y taquipnea compensatorias, vasoconstricción pulmonar, cianosis y posible confusión. Si se prolonga, las células no producen suficiente energía, lo que puede llevar a daño tisular e insuficiencia respiratoria."
+    model:"Aparece hipoxemia: taquicardia y taquipnea compensatorias, vasoconstricción pulmonar, cianosis y posible confusión. Si se prolonga, las células no producen suficiente energía, lo que puede llevar a daño tisular e insuficiencia respiratoria.",
+    concepts:[
+      {label:"Taquicardia o taquipnea compensatoria", keywords:["taquicardi","taquipne","aumenta la frecuencia","respira mas rapido","late mas rapido"]},
+      {label:"Cianosis (color azulado)", keywords:["cianosis","azulad","morad"]},
+      {label:"Confusión o alteración de conciencia", keywords:["confus","mareo","desmay","conciencia","desorient"]},
+      {label:"Daño celular o insuficiencia respiratoria", keywords:["dano","muerte celular","insuficiencia","hipoxia","organos","falla"]}
+    ]
   },
   {
     key:"tabaco", title:"El enemigo del pulmón", type:"open", color:"#6C63C9",
     question:"¿Cómo afecta el tabaquismo al funcionamiento normal de los pulmones?",
-    model:"El humo paraliza y destruye los cilios, por lo que el moco se acumula (tos del fumador). Inflama las vías, aumenta el moco y daña los alvéolos, reduciendo la superficie de intercambio de gases. A largo plazo aumenta el riesgo de EPOC, bronquitis crónica y cáncer de pulmón."
+    model:"El humo paraliza y destruye los cilios, por lo que el moco se acumula (tos del fumador). Inflama las vías, aumenta el moco y daña los alvéolos, reduciendo la superficie de intercambio de gases. A largo plazo aumenta el riesgo de EPOC, bronquitis crónica y cáncer de pulmón.",
+    concepts:[
+      {label:"Paraliza o destruye los cilios", keywords:["cilio","paraliz","destru"]},
+      {label:"Aumenta el moco o la tos", keywords:["moco","tos","flema"]},
+      {label:"Inflama las vías o daña los alvéolos", keywords:["inflam","alveol","dana la","deteriora"]},
+      {label:"Riesgo de EPOC, bronquitis o cáncer", keywords:["epoc","bronquitis","cancer","enfisema"]}
+    ]
   }
 ];
 
@@ -524,16 +548,12 @@ function renderMissionBody(){
   } else {
     body.innerHTML = `
       <h2>${st.question}</h2>
-      <textarea id="answerBox" placeholder="Escribe tu respuesta antes de revelar la del experto..."></textarea>
-      <div class="flip-zone">
-        <div class="flip-card" id="flipCard" onclick="flipCard()">
-          <div class="flip-face front">🔎 Toca para ver la respuesta del experto</div>
-          <div class="flip-face back"><strong>Respuesta de referencia</strong>${st.model}</div>
-        </div>
-      </div>
+      <div class="order-label">Escribe tu respuesta con tus propias palabras. La app la revisará buscando las ideas clave.</div>
+      <textarea id="answerBox" placeholder="Escribe aquí tu respuesta..."></textarea>
       <div class="row-btns">
-        <button class="btn primary" id="finishOpenBtn" onclick="finishOpen()">Continuar ▶</button>
+        <button class="btn primary" id="validateBtn" onclick="validateOpen()">✓ Validar respuesta</button>
       </div>
+      <div id="feedbackBox"></div>
     `;
   }
 }
@@ -643,14 +663,66 @@ function checkOrder(){
   }
 }
 
-/* ----- OPEN ----- */
-function flipCard(){
-  document.getElementById('flipCard').classList.toggle('flipped');
+/* ----- OPEN (validated) ----- */
+function normalize(str){
+  return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 }
+
+let lastMatchedCount = 0;
+
+function validateOpen(){
+  const st = stations[currentIdx];
+  const raw = document.getElementById('answerBox').value.trim();
+  const fb = document.getElementById('feedbackBox');
+
+  if(raw.length < 8){
+    fb.innerHTML = `<div class="feedback no"><strong>Escribe un poco más</strong>Intenta redactar una respuesta completa antes de validarla.</div>`;
+    return;
+  }
+
+  const norm = normalize(raw);
+  const results = st.concepts.map(c => ({
+    label: c.label,
+    matched: c.keywords.some(k => norm.includes(normalize(k)))
+  }));
+  const matchedCount = results.filter(r=>r.matched).length;
+  lastMatchedCount = matchedCount;
+
+  const checklist = results.map(r =>
+    `<div style="display:flex;gap:8px;align-items:flex-start;margin-top:6px;">
+       <span>${r.matched ? '✅' : '⬜'}</span>
+       <span style="color:${r.matched?'#0E7A66':'#8A8A8A'};">${r.label}</span>
+     </div>`
+  ).join('');
+
+  let verdict, verdictClass;
+  if(matchedCount >= st.concepts.length - 1){ verdict = '¡Muy completa!'; verdictClass = 'ok'; }
+  else if(matchedCount >= st.concepts.length/2){ verdict = 'Vas por buen camino'; verdictClass = 'ok'; }
+  else { verdict = 'Te faltan ideas clave'; verdictClass = 'no'; shakeCard(); }
+
+  fb.innerHTML = `
+    <div class="feedback ${verdictClass}">
+      <strong>${verdict} · ${matchedCount}/${st.concepts.length} ideas clave detectadas</strong>
+      ${checklist}
+    </div>
+    <div class="flip-zone">
+      <div class="flip-card flipped" style="cursor:default;">
+        <div class="flip-face back" style="position:relative; transform:none;"><strong>Respuesta de referencia</strong>${st.model}</div>
+      </div>
+    </div>
+    <div class="row-btns">
+      <button class="btn primary" onclick="finishOpen()">Continuar ▶</button>
+    </div>
+  `;
+  if(matchedCount >= st.concepts.length - 1) burstConfetti();
+}
+
 function finishOpen(){
-  points += 50;
-  burstConfetti();
-  setTimeout(()=>completeStation(3), 300);
+  const st = stations[currentIdx];
+  const total = st.concepts.length;
+  const stars = lastMatchedCount >= total - 1 ? 3 : (lastMatchedCount >= total/2 ? 2 : 1);
+  points += lastMatchedCount * 40;
+  completeStation(stars);
 }
 
 /* ----- shared FX ----- */
